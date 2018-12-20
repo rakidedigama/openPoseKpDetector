@@ -110,21 +110,13 @@ void processKeyPoints(op::Array<float> poseKeypoints,std::vector<std::string> ke
                 double xpoint = poseKeypoints.at(kp);
                 double ypoint = poseKeypoints.at(kp+1);
                 double zpoint = poseKeypoints.at(kp+2);
-//        double xpoint = poseKeypoints[kp];
-//        double ypoint = poseKeypoints[kp+1];
-//        double zpoint = poseKeypoints[kp+2];
-
-       // std::thread t1(printKeypoints, "double double double");
-        //std::thread t2(printKeypointsToFile,image_path.toStdString());
 
                 keypointdata = keypointNames[kp/3] + "\t\t" + std::to_string(xpoint) + ", \t " + std::to_string(ypoint)  +
                                                    ", \t" + std::to_string(zpoint);
                 log << keypointdata << std::endl;
-
             }
 
-             log << "\n\n" << std::endl;
-
+            log << "\n\n" << std::endl;
             log.close();
 
         }
@@ -147,7 +139,6 @@ int main(int argc, char *argv[])
     // For all images in folder,
 
 
-
     if(argc<3){
         std::cout<< "Program usage : openPoseTest.exe src_folder_path dest_folder_path" << std::endl;
         std::cout<<"Make sure source folders and destination folders exist" << std::endl;
@@ -157,9 +148,18 @@ int main(int argc, char *argv[])
     QString dest_folder_path = QString::fromStdString(argv[2]);
 
 
-    // QString src_folder_path = "C:/GITROOT/openpose/images/test1";
-    // QString dest_folder_path ="C:/GITROOT/openpose/images/out1";
-    std::cout<<"Folder path : " << src_folder_path.toStdString()<< std::endl;
+    QDir dir;
+    if(!dir.exists(src_folder_path)){
+        std::cout << "Image folder " << src_folder_path.toStdString()<< "does not exist" << std::endl;
+        return 0;
+    }
+
+    if(!dir.exists(dest_folder_path)){
+        std::cout << "Creating new director " << dest_folder_path.toStdString() << std::endl;
+        dir.mkdir(dest_folder_path);
+
+    }
+
     openPoseTutorialPose1(src_folder_path,dest_folder_path);
 
     return 0;
@@ -169,13 +169,6 @@ void openPoseTutorialPose1(QString folder_path,QString dest_folder_path)
 {
     try
     {
-//        QThread *thread = new QThread;
-//        KeypointPrinter *printer = new KeypointPrinter(this);
-//        printer->moveToThread(thread);
-//        QObject::connect(thread,SIGNAL(started()),printer, SLOT(process()));
-//        QObject::connect(thread,SIGNAL(finished()),thread,SLOT(deleteLater()));
-//        thread->start();
-
         op::log("Starting OpenPose demo...", op::Priority::High);
 
 
@@ -262,13 +255,6 @@ void openPoseTutorialPose1(QString folder_path,QString dest_folder_path)
 
         std::cout << "Initialized keypoint names" << std::endl;
 
-//        std::ofstream outlog;
-
-//        std::string keypointfilename = dest_folder_path.toStdString() + "\\" + "keypoint_log.txt";
-//        std::cout << keypointfilename << std::endl;
-//         outlog.open(keypointfilename);
-
-
 
         QDir dir(folder_path);
         QStringList filters;
@@ -330,51 +316,6 @@ void openPoseTutorialPose1(QString folder_path,QString dest_folder_path)
 
             std::thread t3(processKeyPoints,poseKeypoints,keypointNames,image_path.toStdString(),dest_folder_path.toStdString());
             t3.join();
-
-          /*
-            std::string keypointdata = image_path.toStdString() ;
-            std::thread t2(printKeypointsToFile,keypointdata);
-            for(int kp = 0; kp < 75 ; kp+=3){
-                keypointdata = "";
-                double xpoint = poseKeypoints[kp];
-                double ypoint = poseKeypoints[kp+1];
-                double zpoint = poseKeypoints[kp+2];
-
-               // std::thread t1(printKeypoints, "double double double");
-                //std::thread t2(printKeypointsToFile,image_path.toStdString());
-
-                keypointdata = keypointdata + keypointNames[kp/3] + "\t\t" + std::to_string(xpoint) + ",  " + std::to_string(ypoint)  +
-                                                           ", " + std::to_string(zpoint) + "\n";
-                std::thread t2(printKeypointsToFile,keypointdata);
-
-                 //t1.join();
-                 //t2.join();
-//                std::cout << keypointNames[kp/3] << "\t\t" <<  xpoint << ",  " << ypoint  <<
-//                          ", " << zpoint <<std::endl;
-
-
-            }
-            t2.join();
-            */
-           // std::thread t2(printKeypointsToFile,keypointdata);
-
-
-
-
-
-
-            // write to file
-
-//            outlog << i << ". " << image_path.toStdString()<<std::endl;
-////            for(int kp = 0; kp < 75 ; kp+=3){
-
-////                outlog << keypointNames[kp/3] << "\t\t" <<  poseKeypoints[kp] << ",  " << poseKeypoints[kp+1]  <<
-////                          ", " << poseKeypoints[kp+2] << std::endl;
-
-
-////            }
-//            outlog << "\n\n" << std::endl;
-
 
 
 
