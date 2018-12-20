@@ -177,7 +177,7 @@ void openPoseTutorialPose1(QString folder_path,QString dest_folder_path)
 //        thread->start();
 
         op::log("Starting OpenPose demo...", op::Priority::High);
-        const auto timerBegin = std::chrono::high_resolution_clock::now();
+
 
         // ------------------------- INITIALIZATION -------------------------
         // Step 1 - Set logging level
@@ -277,6 +277,8 @@ void openPoseTutorialPose1(QString folder_path,QString dest_folder_path)
         QFileInfoList list = dir.entryInfoList();
         std::cout << list.size() << " image files in folder" << std::endl;
         cv::namedWindow( "Display window", cv::WINDOW_AUTOSIZE );// Create a window for display.
+
+        const auto timerBegin = std::chrono::high_resolution_clock::now();
 
         for(int i=0;i<list.size();i++){
             QString image_path = list.at(i).filePath();
