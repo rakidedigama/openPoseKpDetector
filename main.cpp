@@ -105,22 +105,37 @@ void processKeyPoints(op::Array<float> poseKeypoints,std::vector<std::string> ke
              //std::string logfilename = dest_path + "\\" + "keypoints_log.txt";
              imageName =imageName.substr(0, imageName.size()-4);
              std::string logfilename =  dest_path + "\\" + imageName + ".txt";
-             std::cout << logfilename << std::endl;
+            std::cout <<  "size " << poseKeypoints.printSize() << std::endl;
+
+            int numberOfHumans = poseKeypoints.getSize(0);
+            int numberOfPoints = poseKeypoints.getSize(1); // per person
+            int keypointDims = poseKeypoints.getSize(3); // x, y and height
+
+             std::cout << "Keypoint size    0 : " << poseKeypoints.getSize(0) <<  "Keypoint size 1 : " << poseKeypoints.getSize(1) <<  "Keypoint size 2 : " << poseKeypoints.getSize(2) << std::endl;
+             std::cout << "Saving keypoints to : " << logfilename << std::endl;
              log.open(logfilename, std::ios::app);
              std::string keypointdata;
-             //log << imageName << std::endl;
-             for(int kp = 0; kp < 75 ; kp+=3){
-                keypointdata = "";
-                double xpoint = poseKeypoints.at(kp);
-                double ypoint = poseKeypoints.at(kp+1);
-                double zpoint = poseKeypoints.at(kp+2);
 
-                keypointdata = keypointNames[kp/3] + "\t\t" + std::to_string(xpoint) + ", \t " + std::to_string(ypoint)  +
-                                                   ", \t" + std::to_string(zpoint);
-                log << keypointdata << std::endl;
+
+             for(int humanNumber = 0; humanNumber < numberOfHumans ; humanNumber++){
+                log << "Person : " << humanNumber+1 <<std::endl;
+                //for(int kp = 0; kp < 75 ; kp+3){
+                for(int kp = 0; kp < 25 ; kp++){
+                     keypointdata = "";
+                     float* xpoint = poseKeypoints.getPtr() + (humanNumber * 75) +  (kp*3 + 0);
+                     float* ypoint = poseKeypoints.getPtr() + (humanNumber * 75) +  (kp*3 + 1);
+                     float* zpoint = poseKeypoints.getPtr() + (humanNumber * 75) +  (kp*3 + 2);
+//                    double xpoint = poseKeypoints.at( kp);
+//                    double ypoint = poseKeypoints.at( (kp+1));
+//                    double zpoint = poseKeypoints.at((kp+2));
+
+                    keypointdata = keypointNames[kp] + "\t\t" + std::to_string((double)*xpoint) + ", \t " + std::to_string((double)*ypoint)  +
+                                                       ", \t" + std::to_string((double)*zpoint);
+                    log << keypointdata << std::endl;
+                }
+
+                log << "\n\n" << std::endl;
             }
-
-            log << "\n\n" << std::endl;
             log.close();
 
         }
@@ -274,13 +289,13 @@ void openPoseTutorialPose1(QString folder_path,QString dest_folder_path)
         for(int i=0;i<list.size();i++){
             QString image_path = list.at(i).filePath();
             QString imageName = list.at(i).fileName();
-            std::cout<<"Image path" << image_path.toStdString()<<std::endl;
+            //std::cout<<"Image path" << image_path.toStdString()<<std::endl;
 
             QStringList filename_list = image_path.split("/");
             QString image_name = filename_list.last();
             QString dest_path = dest_folder_path + "/" + image_name;
 
-            std::cout<<"dest path" << dest_path.toStdString() << std::endl;
+           // std::cout<<"dest path" << dest_path.toStdString() << std::endl;
             //     cv::Mat inputImage = cv::imread(image_path, CV_LOAD_IMAGE_COLOR);
             cv::Mat inputImage = op::loadImage(image_path.toStdString(), CV_LOAD_IMAGE_COLOR);
             if(inputImage.empty())
