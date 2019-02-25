@@ -76,6 +76,8 @@ DEFINE_double(alpha_pose,               0.6,            "Blending factor (range 
 DEFINE_string(image_dir,                "",             "Process a directory of images. Use `examples/media/` for our default example folder with 20"
                                                         " images. Read all standard formats (jpg, png, bmp, etc.).");
 
+const bool bDrawRectangle = false;
+
 void openPoseTutorialPose1(QString,QString);
 
 void printKeypoints(std::string keyPointData){
@@ -100,11 +102,13 @@ void processKeyPoints(op::Array<float> poseKeypoints,std::vector<std::string> ke
 
          std::ofstream log;
          if(!poseKeypoints.empty()){
-             std::string logfilename = dest_path + "\\" + "keypoints_log.txt";
+             //std::string logfilename = dest_path + "\\" + "keypoints_log.txt";
+             imageName =imageName.substr(0, imageName.size()-4);
+             std::string logfilename =  dest_path + "\\" + imageName + ".txt";
              std::cout << logfilename << std::endl;
              log.open(logfilename, std::ios::app);
              std::string keypointdata;
-             log << imageName << std::endl;
+             //log << imageName << std::endl;
              for(int kp = 0; kp < 75 ; kp+=3){
                 keypointdata = "";
                 double xpoint = poseKeypoints.at(kp);
@@ -140,7 +144,8 @@ int main(int argc, char *argv[])
 
 
     if(argc<3){
-        std::cout<< "Program usage : openPoseTest.exe src_folder_path dest_folder_path" << std::endl;
+        std::cout<< "Program usage : openPoseTest.exe src_folder_path dest_folder_path --render_threshold=0.1" << std::endl;
+        std::cout << " See all the available parameter options withe the `--help` flag " << std::endl;
         std::cout<<"Make sure source folders and destination folders exist" << std::endl;
     }
 
@@ -268,6 +273,7 @@ void openPoseTutorialPose1(QString folder_path,QString dest_folder_path)
 
         for(int i=0;i<list.size();i++){
             QString image_path = list.at(i).filePath();
+            QString imageName = list.at(i).fileName();
             std::cout<<"Image path" << image_path.toStdString()<<std::endl;
 
             QStringList filename_list = image_path.split("/");
@@ -314,23 +320,26 @@ void openPoseTutorialPose1(QString folder_path,QString dest_folder_path)
 
             std::cout << i << ". " << image_path.toStdString()<<std::endl;
 
-            std::thread t3(processKeyPoints,poseKeypoints,keypointNames,image_path.toStdString(),dest_folder_path.toStdString());
+            std::thread t3(processKeyPoints,poseKeypoints,keypointNames,imageName.toStdString(),dest_folder_path.toStdString());
             t3.join();
 
 
 
             if(!poseKeypoints.empty()){
 
-            for(int i=0; i<poseKeypoints.getSize(0);i++){
-                const auto personRectangle = op::getKeypointsRectangle(poseKeypoints, i, thresholdRectangle);
-                int x_0 = (int)personRectangle.x;
-                int y_0 = (int)personRectangle.y;
-                int width = (int)personRectangle.width;
-                int height = (int)personRectangle.height;
+                if(bDrawRectangle){
 
-                cv::Rect box(x_0,y_0,width,height);
-                cv::rectangle(outputImage, box, cv::Scalar(0, 255, 0),2);
-            }
+                     for(int i=0; i<poseKeypoints.getSize(0);i++){
+                        const auto personRectangle = op::getKeypointsRectangle(poseKeypoints, i, thresholdRectangle);
+                        int x_0 = (int)personRectangle.x;
+                         int y_0 = (int)personRectangle.y;
+                        int width = (int)personRectangle.width;
+                        int height = (int)personRectangle.height;
+
+                        cv::Rect box(x_0,y_0,width,height);
+                        cv::rectangle(outputImage, box, cv::Scalar(0, 255, 0),2);
+                     }
+                }
 
 
 
