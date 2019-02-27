@@ -122,9 +122,13 @@ void processKeyPoints(op::Array<float> poseKeypoints,std::string imageName,std::
                  jointPerson["person"] = humanNumber;
                  Json::Value jointLocations(Json::arrayValue);
 
-                for(int kp = 0; kp < numberOfJoints  ; kp++){
+                for(int kp = 0; kp < 17  ; kp++){ // 17 because 18 - 1 (Neck)
+
 
                     keypointdata = "";
+
+                    Json::Value keypoint;
+                    if(kp==0){
 
                      float* xpoint = poseKeypoints.getPtr() + (humanNumber * numberOfJoints * keypointDims ) +  (kp*3 + 0);
                      float* ypoint = poseKeypoints.getPtr() + (humanNumber * numberOfJoints * keypointDims ) +  (kp*3 + 1);
@@ -134,11 +138,31 @@ void processKeyPoints(op::Array<float> poseKeypoints,std::string imageName,std::
                                                        ", \t" + std::to_string((double)*zpoint);
                     //log << keypointdata << std::endl;
 
-                    Json::Value keypoint;
+
                     keypoint["joint_name"] = COCO_KEYPOINT_NAMES[kp];
                     keypoint["personId"] = kp;
                     keypoint["points"]["x"] = (int)*xpoint;
                     keypoint["points"]["y"] = (int)*ypoint;
+
+                    }
+
+                    if(kp>0){
+
+                     float* xpoint = poseKeypoints.getPtr() + (humanNumber * numberOfJoints * keypointDims ) +  ((kp+1)*3 + 0);
+                     float* ypoint = poseKeypoints.getPtr() + (humanNumber * numberOfJoints * keypointDims ) +  ((kp+1)*3 + 1);
+                     float* zpoint = poseKeypoints.getPtr() + (humanNumber * numberOfJoints * keypointDims ) +  ((kp+1)*3 + 2);
+
+                    keypointdata = COCO_KEYPOINT_NAMES[kp] + "\t\t" + std::to_string((double)*xpoint) + ", \t " + std::to_string((double)*ypoint)  +
+                                                       ", \t" + std::to_string((double)*zpoint);
+                    //log << keypointdata << std::endl;
+
+
+                    keypoint["joint_name"] = COCO_KEYPOINT_NAMES[kp];
+                    keypoint["personId"] = kp;
+                    keypoint["points"]["x"] = (int)*xpoint;
+                    keypoint["points"]["y"] = (int)*ypoint;
+
+                    }
 
                     jointLocations.append(keypoint);
 

@@ -10,6 +10,6 @@ INSTRUCTIONS
 * Threshold command line arguement implemented. ( look at all the possible command line arguments using -- help)
 * Keypoints saved to text file named "keypoints_log" inside Output folder
  
-<PATH TO OpenPoseBBDetection>build\OpenPoseKpTester\OpenPoseTest.ext <INPUT FOLDER PATH> <OUTPUT FOLDER PATH> -render_threshold=0.5
+<PATH TO OpenPoseBBDetection>build\OpenPoseKpTester\openPoseKpDetector.exe <INPUT FOLDER PATH> <OUTPUT FOLDER PATH> -render_threshold=0.5
 
 
