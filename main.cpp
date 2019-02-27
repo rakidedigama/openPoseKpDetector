@@ -119,7 +119,7 @@ void processKeyPoints(op::Array<float> poseKeypoints,std::string imageName,std::
              for(int humanNumber = 0; humanNumber < numberOfHumans ; humanNumber++){
 
                  Json::Value jointPerson;
-                 jointPerson["person"] = humanNumber;
+                 jointPerson["personId"] = humanNumber;
                  Json::Value jointLocations(Json::arrayValue);
 
                 for(int kp = 0; kp < 17  ; kp++){ // 17 because 18 - 1 (Neck)
@@ -140,27 +140,43 @@ void processKeyPoints(op::Array<float> poseKeypoints,std::string imageName,std::
 
 
                     keypoint["joint_name"] = COCO_KEYPOINT_NAMES[kp];
-                    keypoint["personId"] = kp;
+                    keypoint["id"] = kp;
                     keypoint["points"]["x"] = (int)*xpoint;
                     keypoint["points"]["y"] = (int)*ypoint;
 
                     }
 
                     if(kp>0){
+                         if(kp<13){
 
-                     float* xpoint = poseKeypoints.getPtr() + (humanNumber * numberOfJoints * keypointDims ) +  ((kp+1)*3 + 0);
-                     float* ypoint = poseKeypoints.getPtr() + (humanNumber * numberOfJoints * keypointDims ) +  ((kp+1)*3 + 1);
-                     float* zpoint = poseKeypoints.getPtr() + (humanNumber * numberOfJoints * keypointDims ) +  ((kp+1)*3 + 2);
 
-                    keypointdata = COCO_KEYPOINT_NAMES[kp] + "\t\t" + std::to_string((double)*xpoint) + ", \t " + std::to_string((double)*ypoint)  +
-                                                       ", \t" + std::to_string((double)*zpoint);
+                            float* xpoint = poseKeypoints.getPtr() + (humanNumber * numberOfJoints * keypointDims ) +  ((kp+1)*3 + 0);
+                             float* ypoint = poseKeypoints.getPtr() + (humanNumber * numberOfJoints * keypointDims ) +  ((kp+1)*3 + 1);
+                            float* zpoint = poseKeypoints.getPtr() + (humanNumber * numberOfJoints * keypointDims ) +  ((kp+1)*3 + 2);
+
+//                             keypointdata = COCO_KEYPOINT_NAMES[kp] + "\t\t" + std::to_string((double)*xpoint) + ", \t " + std::to_string((double)*ypoint)  +
+//                                                       ", \t" + std::to_string((double)*zpoint);
                     //log << keypointdata << std::endl;
 
+                             keypoint["joint_name"] = COCO_KEYPOINT_NAMES[kp];
+                             keypoint["id"] = kp;
+                             keypoint["points"]["x"] = (int)*xpoint;
+                             keypoint["points"]["y"] = (int)*ypoint;
+                         }
+                         else{ // face keypoints = zero
 
-                    keypoint["joint_name"] = COCO_KEYPOINT_NAMES[kp];
-                    keypoint["personId"] = kp;
-                    keypoint["points"]["x"] = (int)*xpoint;
-                    keypoint["points"]["y"] = (int)*ypoint;
+                             int xpoint = 0;
+                             int ypoint = 0;
+
+//                             keypointdata = COCO_KEYPOINT_NAMES[kp] + "\t\t" + std::to_string((double)*xpoint) + ", \t " + std::to_string((double)*ypoint)  +
+//                                                        ", \t" + std::to_string((double)*zpoint);
+                     //log << keypointdata << std::endl;
+
+                              keypoint["joint_name"] = COCO_KEYPOINT_NAMES[kp];
+                              keypoint["id"] = kp;
+                              keypoint["points"]["x"] = xpoint;
+                              keypoint["points"]["y"] = ypoint;
+                         }
 
                     }
 

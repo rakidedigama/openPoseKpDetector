@@ -10,7 +10,7 @@ std::string BODY25_KEYPOINT_NAMES[25] = {"Nose", "Neck", "RShoulder", "RElbow", 
                                         "REye", "LEye","REar","LEar","LBigToe",
                                          "LSmallToe","LHeel","RBigToe","RSmallToe","RHeel"};
 
-std::string COCO_KEYPOINT_NAMES[18] = {"Nose", "RShoulder", "RElbow", "RWrist",
+std::string COCO_KEYPOINT_NAMES[17] = {"Nose", "RShoulder", "RElbow", "RWrist",
                                        "LShoulder", "LElbow", "LWrist",
                                        "RHip", "RKnee", "RAnkle",
                                        "Lhip", "Lknee", "LAnkle",
