@@ -22,15 +22,18 @@ DEFINES += QT_DEPRECATED_WARNINGS
 # You can also select to disable deprecated APIs only up to a certain version of Qt.
 #DEFINES += QT_DISABLE_DEPRECATED_BEFORE=0x060000    # disables all the APIs deprecated before Qt 6.0.0
 
+include(../../../ProjectIncludes/jsonlib.pri)
 
 
 INCLUDEPATH += C:\dev\openpose\include\
             C:\dev\openpose\3rdparty\windows\opencv\include\
             C:\dev\openpose\3rdparty\windows\caffe3rdparty\include\
             C:\dev\openpose\3rdparty\windows\caffe\include2\
-            C:\dev\openpose\3rdparty\windows\caffe\include
+            C:\dev\openpose\3rdparty\windows\caffe\include \
+            ../jsonTest/
 
-HEADERS+= "C:\dev\openpose\include\openpose\headers.hpp"\
+HEADERS+=  ../jsonTest/keypointdetector.h \
+"C:\dev\openpose\include\openpose\headers.hpp"\
             C:\dev\openpose\include\openpose\core\cvMatToOpInput.hpp\
              C:\dev\openpose\include\openpose\core\scaleAndSizeExtractor.hpp\
             C:\dev\openpose\include\openpose\core\array.hpp\

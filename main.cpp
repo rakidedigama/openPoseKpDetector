@@ -30,10 +30,9 @@
 #include "QDir"
 
 #include <thread>
+#include "json.h"
+#include "keypointdetector.h"
 
-//#include "QThread"
-//#include "QObject"
-//#include "keypointprinter.h"
 
 // See all the available parameter options withe the `--help` flag. E.g. `build/examples/openpose/openpose.bin --help`
 // Note: This command will show you flags for other unnecessary 3rdparty files. Check only the flags for the OpenPose
@@ -45,7 +44,7 @@ DEFINE_int32(logging_level,             3,              "The logging level. Inte
 // Producer
 //DEFINE_string(image_path,               "examples/media/COCO_val2014_000000000192.jpg",     "Process the desired image.");
 // OpenPose
-DEFINE_string(model_pose,               "BODY_25",      "Model to be used. E.g. `COCO` (18 keypoints), `MPI` (15 keypoints, ~10% faster), "
+DEFINE_string(model_pose,               "COCO",      "Model to be used. E.g. `COCO` (18 keypoints), `MPI` (15 keypoints, ~10% faster), "
                                                         "`MPI_4_layers` (15 keypoints, even faster but less accurate).");
 DEFINE_string(model_folder,             "models/",      "Folder path (absolute or relative) where the models (pose, face, ...) are located.");
 DEFINE_string(net_resolution,           "-1x368",       "Multiples of 16. If it is increased, the accuracy potentially increases. If it is"
@@ -80,62 +79,81 @@ const bool bDrawRectangle = false;
 
 void openPoseTutorialPose1(QString,QString);
 
-void printKeypoints(std::string keyPointData){
-    std::cout << " Printing in new thread " << keyPointData << std::endl;
-}
 
-void printKeypointsToFile(std::string keyPointData){
-    std::ofstream log;
 
-     // std::ios::app is the open mode "append" meaning
-     // new data will be written to the end of the file.
-     log.open("logfile.txt", std::ios::app);
 
-    log << " Printing in new thread " << keyPointData << std::endl;
-}
+
 
 /*
  * Input arguments : Array of pose keypoints, string vector of keypoint names eg : LShoulder, Nose etc,
  * */
-void processKeyPoints(op::Array<float> poseKeypoints,std::vector<std::string> keypointNames,std::string imageName,std::string dest_path){
+void processKeyPoints(op::Array<float> poseKeypoints,std::string imageName,std::string imgPath, std::string dest_path){
     try{
 
          std::ofstream log;
          if(!poseKeypoints.empty()){
-             //std::string logfilename = dest_path + "\\" + "keypoints_log.txt";
+
              imageName =imageName.substr(0, imageName.size()-4);
-             std::string logfilename =  dest_path + "\\" + imageName + ".txt";
-            std::cout <<  "size " << poseKeypoints.printSize() << std::endl;
+             std::string logfilename =  dest_path + "\\" + imageName + ".json";
+             std::cout <<  "size " << poseKeypoints.printSize() << std::endl;
 
             int numberOfHumans = poseKeypoints.getSize(0);
-            int numberOfPoints = poseKeypoints.getSize(1); // per person
+            int numberOfJoints = poseKeypoints.getSize(1); // per person
             int keypointDims = poseKeypoints.getSize(3); // x, y and height
 
-             std::cout << "Keypoint size    0 : " << poseKeypoints.getSize(0) <<  "Keypoint size 1 : " << poseKeypoints.getSize(1) <<  "Keypoint size 2 : " << poseKeypoints.getSize(2) << std::endl;
+            // std::cout << "Keypoint size   0 : " << poseKeypoints.getSize(0) <<  "Keypoint size 1 : " << poseKeypoints.getSize(1) <<  "Keypoint size 2 : " << poseKeypoints.getSize(2) << std::endl;
              std::cout << "Saving keypoints to : " << logfilename << std::endl;
+
              log.open(logfilename, std::ios::app);
              std::string keypointdata;
 
+             // PRINT KEYPOINTS
+             Json::Value root;
+             root["imagepath"] = imgPath;
+             root["scaleratio"] = 1;
+             Json::Value keypoints(Json::arrayValue); // keep empty
+             root["keypoints"] = keypoints;
+
+             Json::Value joints(Json::arrayValue); // person, jointlocations.
 
              for(int humanNumber = 0; humanNumber < numberOfHumans ; humanNumber++){
-                log << "Person : " << humanNumber+1 <<std::endl;
-                //for(int kp = 0; kp < 75 ; kp+3){
-                for(int kp = 0; kp < 25 ; kp++){
-                     keypointdata = "";
-                     float* xpoint = poseKeypoints.getPtr() + (humanNumber * 75) +  (kp*3 + 0);
-                     float* ypoint = poseKeypoints.getPtr() + (humanNumber * 75) +  (kp*3 + 1);
-                     float* zpoint = poseKeypoints.getPtr() + (humanNumber * 75) +  (kp*3 + 2);
+
+                 Json::Value jointPerson;
+                 jointPerson["person"] = humanNumber;
+                 Json::Value jointLocations(Json::arrayValue);
+
+                for(int kp = 0; kp < numberOfJoints  ; kp++){
+
+                    keypointdata = "";
+
+                     float* xpoint = poseKeypoints.getPtr() + (humanNumber * numberOfJoints * keypointDims ) +  (kp*3 + 0);
+                     float* ypoint = poseKeypoints.getPtr() + (humanNumber * numberOfJoints * keypointDims ) +  (kp*3 + 1);
+                     float* zpoint = poseKeypoints.getPtr() + (humanNumber * numberOfJoints * keypointDims ) +  (kp*3 + 2);
 //                    double xpoint = poseKeypoints.at( kp);
 //                    double ypoint = poseKeypoints.at( (kp+1));
 //                    double zpoint = poseKeypoints.at((kp+2));
 
-                    keypointdata = keypointNames[kp] + "\t\t" + std::to_string((double)*xpoint) + ", \t " + std::to_string((double)*ypoint)  +
+                    keypointdata = COCO_KEYPOINT_NAMES[kp] + "\t\t" + std::to_string((double)*xpoint) + ", \t " + std::to_string((double)*ypoint)  +
                                                        ", \t" + std::to_string((double)*zpoint);
-                    log << keypointdata << std::endl;
+                    //log << keypointdata << std::endl;
+
+                    Json::Value keypoint;
+                    keypoint["joint_name"] = COCO_KEYPOINT_NAMES[kp];
+                    keypoint["personId"] = kp;
+                    keypoint["points"]["x"] = (int)*xpoint;
+                    keypoint["points"]["y"] = (int)*ypoint;
+
+                    jointLocations.append(keypoint);
+
+
                 }
 
-                log << "\n\n" << std::endl;
+                jointPerson["jointLocations"] = jointLocations;
+                joints.append(jointPerson);
+
             }
+            root["joints"] = joints;
+            log << root << std::endl;
             log.close();
 
         }
@@ -151,12 +169,8 @@ void processKeyPoints(op::Array<float> poseKeypoints,std::vector<std::string> ke
 
 int main(int argc, char *argv[])
 {
-    // Parsing command line flags
-     gflags::ParseCommandLineFlags(&argc, &argv, true);
 
-    // Running openPoseTutorialPose1
-    // For all images in folder,
-
+    gflags::ParseCommandLineFlags(&argc, &argv, true);
 
     if(argc<3){
         std::cout<< "Program usage : openPoseTest.exe src_folder_path dest_folder_path --render_threshold=0.1" << std::endl;
@@ -173,7 +187,6 @@ int main(int argc, char *argv[])
         std::cout << "Image folder " << src_folder_path.toStdString()<< "does not exist" << std::endl;
         return 0;
     }
-
     if(!dir.exists(dest_folder_path)){
         std::cout << "Creating new director " << dest_folder_path.toStdString() << std::endl;
         dir.mkdir(dest_folder_path);
@@ -181,7 +194,6 @@ int main(int argc, char *argv[])
     }
 
     openPoseTutorialPose1(src_folder_path,dest_folder_path);
-
     return 0;
 }
 
@@ -191,11 +203,8 @@ void openPoseTutorialPose1(QString folder_path,QString dest_folder_path)
     {
         op::log("Starting OpenPose demo...", op::Priority::High);
 
-
         // ------------------------- INITIALIZATION -------------------------
-        // Step 1 - Set logging level
-            // - 0 will output all the logging messages
-            // - 255 will output nothing
+        // Step 1 - Set logging level     // - 0 will output all the logging messages      // - 255 will output nothing
         op::check(0 <= FLAGS_logging_level && FLAGS_logging_level <= 255, "Wrong logging_level value.",
                   __LINE__, __FUNCTION__, __FILE__);
         op::ConfigureLog::setPriorityThreshold((op::Priority)FLAGS_logging_level);
@@ -240,37 +249,37 @@ void openPoseTutorialPose1(QString folder_path,QString dest_folder_path)
         // Alternative: cv::imread(FLAGS_image_path, CV_LOAD_IMAGE_COLOR);
         //cv::Mat inputImage = op::loadImage(image_path, CV_LOAD_IMAGE_COLOR);
 
-        // Define pose keypoints vector
-        std::vector<std::string> keypointNames;
-        keypointNames.push_back("Nose      ");
-        keypointNames.push_back("Neck      ");
-        keypointNames.push_back("RShoulder ");
-        keypointNames.push_back("RElbow    ");
-        keypointNames.push_back("RWrist    ");
+//        // Define pose keypoints vector
+//        std::vector<std::string> keypointNames;
+//        keypointNames.push_back("Nose      ");
+//        keypointNames.push_back("Neck      ");
+//        keypointNames.push_back("RShoulder ");
+//        keypointNames.push_back("RElbow    ");
+//        keypointNames.push_back("RWrist    ");
 
-        keypointNames.push_back("LShoulder ");
-        keypointNames.push_back("LElbow    ");
-        keypointNames.push_back("LWrist    ");
-        keypointNames.push_back("MidHip    ");
-        keypointNames.push_back("RHip      ");
+//        keypointNames.push_back("LShoulder ");
+//        keypointNames.push_back("LElbow    ");
+//        keypointNames.push_back("LWrist    ");
+//        keypointNames.push_back("MidHip    ");
+//        keypointNames.push_back("RHip      ");
 
-        keypointNames.push_back("RKnee     ");
-        keypointNames.push_back("RAnkle    ");
-        keypointNames.push_back("LHip      ");
-        keypointNames.push_back("LKnee     ");
-        keypointNames.push_back("LAnkle    ");
+//        keypointNames.push_back("RKnee     ");
+//        keypointNames.push_back("RAnkle    ");
+//        keypointNames.push_back("LHip      ");
+//        keypointNames.push_back("LKnee     ");
+//        keypointNames.push_back("LAnkle    ");
 
-        keypointNames.push_back("REye      ");
-        keypointNames.push_back("LEye      ");
-        keypointNames.push_back("REar      ");
-        keypointNames.push_back("LEar      ");
-        keypointNames.push_back("LBigToe   ");
+//        keypointNames.push_back("REye      ");
+//        keypointNames.push_back("LEye      ");
+//        keypointNames.push_back("REar      ");
+//        keypointNames.push_back("LEar      ");
+//        keypointNames.push_back("LBigToe   ");
 
-        keypointNames.push_back("LSmallToe ");
-        keypointNames.push_back("LHeel     ");
-        keypointNames.push_back("RBigToe   ");
-        keypointNames.push_back("RSmallToe ");
-        keypointNames.push_back("RHeel     ");
+//        keypointNames.push_back("LSmallToe ");
+//        keypointNames.push_back("LHeel     ");
+//        keypointNames.push_back("RBigToe   ");
+//        keypointNames.push_back("RSmallToe ");
+//        keypointNames.push_back("RHeel     ");
 
 
         std::cout << "Initialized keypoint names" << std::endl;
@@ -288,6 +297,7 @@ void openPoseTutorialPose1(QString folder_path,QString dest_folder_path)
 
         for(int i=0;i<list.size();i++){
             QString image_path = list.at(i).filePath();
+
             QString imageName = list.at(i).fileName();
             //std::cout<<"Image path" << image_path.toStdString()<<std::endl;
 
@@ -295,8 +305,6 @@ void openPoseTutorialPose1(QString folder_path,QString dest_folder_path)
             QString image_name = filename_list.last();
             QString dest_path = dest_folder_path + "/" + image_name;
 
-           // std::cout<<"dest path" << dest_path.toStdString() << std::endl;
-            //     cv::Mat inputImage = cv::imread(image_path, CV_LOAD_IMAGE_COLOR);
             cv::Mat inputImage = op::loadImage(image_path.toStdString(), CV_LOAD_IMAGE_COLOR);
             if(inputImage.empty())
                 std::cout<<"Image empty" << std::endl;
@@ -309,35 +317,30 @@ void openPoseTutorialPose1(QString folder_path,QString dest_folder_path)
             op::Point<int> outputResolution;
             std::tie(scaleInputToNetInputs, netInputSizes, scaleInputToOutput, outputResolution)
                  = scaleAndSizeExtractor.extract(imageSize);
-             // Step 3 - Format input image to OpenPose input and output formats
+
+            // Step 3 - Format input image to OpenPose input and output formats
             const auto netInputArray = cvMatToOpInput.createArray(inputImage, scaleInputToNetInputs, netInputSizes);
             auto outputArray = cvMatToOpOutput.createArray(inputImage, scaleInputToOutput, outputResolution);
+
             // Step 4 - Estimate poseKeypoints
             poseExtractorCaffe.forwardPass(netInputArray, imageSize, scaleInputToNetInputs);
             const auto poseKeypoints = poseExtractorCaffe.getPoseKeypoints();
 
             const auto thresholdRectangle = 0.1f;
             const auto numberKeypoints = poseKeypoints.getSize(1);
-
             const auto areaKeypoints = numberKeypoints * poseKeypoints.getSize(2);
-
-
 
 
             // Step 5 - Render poseKeypoints
              poseRenderer.renderPose(outputArray, poseKeypoints, scaleInputToOutput);
-             // Step 6 - OpenPose output format to cv::Mat
-            auto outputImage = opOutputToCvMat.formatToCvMat(outputArray);
 
-             // add rectangle
-
-            // send the values through a signal, to a slot in a separate class & thread.
+            // Step 6 - OpenPose output format to cv::Mat
+            auto outputImage = opOutputToCvMat.formatToCvMat(outputArray);         
 
             std::cout << i << ". " << image_path.toStdString()<<std::endl;
 
-            std::thread t3(processKeyPoints,poseKeypoints,keypointNames,imageName.toStdString(),dest_folder_path.toStdString());
+            std::thread t3(processKeyPoints,poseKeypoints,imageName.toStdString(),image_path.toStdString(), dest_folder_path.toStdString());
             t3.join();
-
 
 
             if(!poseKeypoints.empty()){
@@ -356,34 +359,20 @@ void openPoseTutorialPose1(QString folder_path,QString dest_folder_path)
                      }
                 }
 
-
-
-           // ------------------------- SHOWING RESULT AND CLOSING -------------------------
-           // Show results
-            /*frameDisplayer.displayFrame(outputImage, 0);*/ // Alternative: cv::imshow(outputImage) + cv::waitKey(0)
-            cv::imshow("Display window",outputImage);
-            cv::imwrite(dest_path.toStdString(),outputImage);
-            cv::waitKey(10);
+                cv::imshow("Display window",outputImage);
+                cv::imwrite(dest_path.toStdString(),outputImage);
+                cv::waitKey(10);
             }
-           // Measuring total time
+
+
             const auto now = std::chrono::high_resolution_clock::now();
             const auto totalTimeSec = (double)std::chrono::duration_cast<std::chrono::nanoseconds>(now-timerBegin).count()
                                  * 1e-9;
             const auto message = "OpenPose demo successfully finished. Total time: "
                             + std::to_string(totalTimeSec) + " seconds.";
-            op::log(message, op::Priority::High);
-            // Return successful message
+            op::log(message, op::Priority::High);            
 
         }
-
-//        outlog.close();
-
-
-
-        //cv::Mat inputImage = cv::imread(image_path.toStdString(), CV_LOAD_IMAGE_COLOR);
-        //        if(inputImage.empty())
-        //            op::error("Could not open or find the image: " + image_path, __LINE__, __FUNCTION__, __FILE__);
-        //
 
 
     }
