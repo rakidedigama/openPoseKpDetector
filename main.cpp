@@ -129,9 +129,6 @@ void processKeyPoints(op::Array<float> poseKeypoints,std::string imageName,std::
                      float* xpoint = poseKeypoints.getPtr() + (humanNumber * numberOfJoints * keypointDims ) +  (kp*3 + 0);
                      float* ypoint = poseKeypoints.getPtr() + (humanNumber * numberOfJoints * keypointDims ) +  (kp*3 + 1);
                      float* zpoint = poseKeypoints.getPtr() + (humanNumber * numberOfJoints * keypointDims ) +  (kp*3 + 2);
-//                    double xpoint = poseKeypoints.at( kp);
-//                    double ypoint = poseKeypoints.at( (kp+1));
-//                    double zpoint = poseKeypoints.at((kp+2));
 
                     keypointdata = COCO_KEYPOINT_NAMES[kp] + "\t\t" + std::to_string((double)*xpoint) + ", \t " + std::to_string((double)*ypoint)  +
                                                        ", \t" + std::to_string((double)*zpoint);
@@ -144,7 +141,6 @@ void processKeyPoints(op::Array<float> poseKeypoints,std::string imageName,std::
                     keypoint["points"]["y"] = (int)*ypoint;
 
                     jointLocations.append(keypoint);
-
 
                 }
 
@@ -249,37 +245,6 @@ void openPoseTutorialPose1(QString folder_path,QString dest_folder_path)
         // Alternative: cv::imread(FLAGS_image_path, CV_LOAD_IMAGE_COLOR);
         //cv::Mat inputImage = op::loadImage(image_path, CV_LOAD_IMAGE_COLOR);
 
-//        // Define pose keypoints vector
-//        std::vector<std::string> keypointNames;
-//        keypointNames.push_back("Nose      ");
-//        keypointNames.push_back("Neck      ");
-//        keypointNames.push_back("RShoulder ");
-//        keypointNames.push_back("RElbow    ");
-//        keypointNames.push_back("RWrist    ");
-
-//        keypointNames.push_back("LShoulder ");
-//        keypointNames.push_back("LElbow    ");
-//        keypointNames.push_back("LWrist    ");
-//        keypointNames.push_back("MidHip    ");
-//        keypointNames.push_back("RHip      ");
-
-//        keypointNames.push_back("RKnee     ");
-//        keypointNames.push_back("RAnkle    ");
-//        keypointNames.push_back("LHip      ");
-//        keypointNames.push_back("LKnee     ");
-//        keypointNames.push_back("LAnkle    ");
-
-//        keypointNames.push_back("REye      ");
-//        keypointNames.push_back("LEye      ");
-//        keypointNames.push_back("REar      ");
-//        keypointNames.push_back("LEar      ");
-//        keypointNames.push_back("LBigToe   ");
-
-//        keypointNames.push_back("LSmallToe ");
-//        keypointNames.push_back("LHeel     ");
-//        keypointNames.push_back("RBigToe   ");
-//        keypointNames.push_back("RSmallToe ");
-//        keypointNames.push_back("RHeel     ");
 
 
         std::cout << "Initialized keypoint names" << std::endl;

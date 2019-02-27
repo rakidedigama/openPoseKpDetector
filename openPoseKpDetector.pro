@@ -30,9 +30,9 @@ INCLUDEPATH += C:\dev\openpose\include\
             C:\dev\openpose\3rdparty\windows\caffe3rdparty\include\
             C:\dev\openpose\3rdparty\windows\caffe\include2\
             C:\dev\openpose\3rdparty\windows\caffe\include \
-            ../jsonTest/
 
-HEADERS+=  ../jsonTest/keypointdetector.h \
+
+HEADERS+=  keypointdetector.h \
 "C:\dev\openpose\include\openpose\headers.hpp"\
             C:\dev\openpose\include\openpose\core\cvMatToOpInput.hpp\
              C:\dev\openpose\include\openpose\core\scaleAndSizeExtractor.hpp\
