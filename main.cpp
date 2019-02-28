@@ -75,7 +75,10 @@ DEFINE_double(alpha_pose,               0.6,            "Blending factor (range 
 DEFINE_string(image_dir,                "",             "Process a directory of images. Use `examples/media/` for our default example folder with 20"
                                                         " images. Read all standard formats (jpg, png, bmp, etc.).");
 
+
+
 const bool bDrawRectangle = false;
+//bool bWriteImage = true;
 
 void openPoseTutorialPose1(QString,QString);
 
@@ -121,53 +124,45 @@ void processKeyPoints(op::Array<float> poseKeypoints,std::string imageName,std::
                  Json::Value jointPerson;
                  Json::Value jointLocations(Json::arrayValue);
 
-                for(int kp = 0; kp < 17  ; kp++){ // 17 because 18 - 1 (Neck)
+                for(int kp = 0; kp < 13  ; kp++){ // 13 > ignore face keypoints ears & eyes (14,15,16,17)
 
-                    Json::Value keypoint;
+                    float *xpoint;
+                    float *ypoint;
+                    float *zpoint;
                     if(kp==0){
 
-                         float* xpoint = poseKeypoints.getPtr() + (humanNumber * numberOfJoints * keypointDims ) +  (kp*3 + 0);
-                        float* ypoint = poseKeypoints.getPtr() + (humanNumber * numberOfJoints * keypointDims ) +  (kp*3 + 1);
-                        float* zpoint = poseKeypoints.getPtr() + (humanNumber * numberOfJoints * keypointDims ) +  (kp*3 + 2);
+                        xpoint = poseKeypoints.getPtr() + (humanNumber * numberOfJoints * keypointDims ) +  (kp*3 + 0);
+                       ypoint = poseKeypoints.getPtr() + (humanNumber * numberOfJoints * keypointDims ) +  (kp*3 + 1);
+                        zpoint = poseKeypoints.getPtr() + (humanNumber * numberOfJoints * keypointDims ) +  (kp*3 + 2);
 
 
-                        keypoint["joint_name"] = COCO_KEYPOINT_NAMES[kp];
-                        keypoint["id"] = kp;
-                        keypoint["points"]["x"] = (int)*xpoint;
-                        keypoint["points"]["y"] = (int)*ypoint;
-
+//                        keypoint["joint_name"] = COCO_KEYPOINT_NAMES[kp];
+//                        keypoint["id"] = kp;
+//                        keypoint["points"]["x"] = (int)*xpoint;
+//                        keypoint["points"]["y"] = (int)*ypoint;
                     }
 
                     if(kp>0){
-                         if(kp<13){
 
 
-                            float* xpoint = poseKeypoints.getPtr() + (humanNumber * numberOfJoints * keypointDims ) +  ((kp+1)*3 + 0); //offset neck kp
-                             float* ypoint = poseKeypoints.getPtr() + (humanNumber * numberOfJoints * keypointDims ) +  ((kp+1)*3 + 1);
-                            float* zpoint = poseKeypoints.getPtr() + (humanNumber * numberOfJoints * keypointDims ) +  ((kp+1)*3 + 2);
-
-
-
-                             keypoint["joint_name"] = COCO_KEYPOINT_NAMES[kp];
-                             keypoint["id"] = kp;
-                             keypoint["points"]["x"] = (int)*xpoint;
-                             keypoint["points"]["y"] = (int)*ypoint;
-                         }
-                         else{ // face keypoints = zero
-
-                             int xpoint = 0;
-                             int ypoint = 0;
-
-
-                              keypoint["joint_name"] = COCO_KEYPOINT_NAMES[kp];
-                              keypoint["id"] = kp;
-                              keypoint["points"]["x"] = xpoint;
-                              keypoint["points"]["y"] = ypoint;
-                         }
+                            xpoint = poseKeypoints.getPtr() + (humanNumber * numberOfJoints * keypointDims ) +  ((kp+1)*3 + 0);  // +1 to offset neck kp
+                            ypoint = poseKeypoints.getPtr() + (humanNumber * numberOfJoints * keypointDims ) +  ((kp+1)*3 + 1); // Neck Kp is not an original COCO kp. It is
+                            zpoint = poseKeypoints.getPtr() + (humanNumber * numberOfJoints * keypointDims ) +  ((kp+1)*3 + 2);  // obtained by OP calculating mid-point of Left
+                                                                                                                                        //  & Right Shoulders
 
                     }
 
-                    jointLocations.append(keypoint);
+
+                    int x = (int)*xpoint;
+                    int y = (int)*ypoint;
+                    if(x!=0 || y!=0) {// found kp, both equals zero if kp not found
+                        Json::Value keypoint;
+                        keypoint["joint_name"] = COCO_KEYPOINT_NAMES[kp];
+                        keypoint["id"] = kp;
+                        keypoint["points"]["x"] = x;
+                        keypoint["points"]["y"] = y;
+                        jointLocations.append(keypoint);
+                    }
 
                 }
 
@@ -204,6 +199,7 @@ int main(int argc, char *argv[])
 
     QString src_folder_path = QString::fromStdString(argv[1]);
     QString dest_folder_path = QString::fromStdString(argv[2]);
+    //bool bWriteImage = argv[3];
 
 
     QDir dir;
@@ -241,6 +237,7 @@ void openPoseTutorialPose1(QString folder_path,QString dest_folder_path)
         // poseModel
         const auto poseModel = op::flagsToPoseModel(FLAGS_model_pose);
         // image directory
+
 
         // poseModel
 
@@ -351,9 +348,11 @@ void openPoseTutorialPose1(QString folder_path,QString dest_folder_path)
                         cv::rectangle(outputImage, box, cv::Scalar(0, 255, 0),2);
                      }
                 }
-
+                bool bWriteImage = true;
                 cv::imshow("Display window",outputImage);
-                cv::imwrite(dest_path.toStdString(),outputImage);
+                if(bWriteImage){
+                 cv::imwrite(dest_path.toStdString(),outputImage);
+                }
                 cv::waitKey(10);
             }
 
